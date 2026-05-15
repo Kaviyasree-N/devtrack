@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface BadgeSectionProps {
   username: string;
@@ -10,12 +10,23 @@ interface BadgeSectionProps {
  * Badge section component for embedding badges in README
  */
 export default function BadgeSection({ username }: BadgeSectionProps) {
-  const baseUrl = typeof window !== "undefined"
-    ? window.location.origin
-    : process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://devtrack.app";
+  // Relative URLs for preview images — always correct regardless of env vars
+  const streakBadgePreviewUrl = `/api/badge/streak?user=${username}`;
+  const commitsBadgePreviewUrl = `/api/badge/commits?user=${username}`;
 
-  const streakBadgeUrl = `${baseUrl}/api/badge/streak?user=${username}`;
-  const commitsBadgeUrl = `${baseUrl}/api/badge/commits?user=${username}`;
+  // Absolute URLs for copy markdown — resolved on client only to avoid hydration mismatch
+  const [baseUrl, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
+
+  const streakBadgeUrl = baseUrl
+    ? `${baseUrl}/api/badge/streak?user=${username}`
+    : streakBadgePreviewUrl;
+  const commitsBadgeUrl = baseUrl
+    ? `${baseUrl}/api/badge/commits?user=${username}`
+    : commitsBadgePreviewUrl;
 
   const streakMarkdown = `![DevTrack Streak](${streakBadgeUrl})`;
   const commitsMarkdown = `![DevTrack Commits](${commitsBadgeUrl})`;
@@ -37,7 +48,7 @@ export default function BadgeSection({ username }: BadgeSectionProps) {
             Streak Badge
           </h3>
           <div className="mb-2">
-            <img src={streakBadgeUrl} alt="DevTrack Streak" />
+            <img src={streakBadgePreviewUrl} alt="DevTrack Streak" />
           </div>
           <CopyableCodeBlock code={streakMarkdown} />
         </div>
@@ -48,7 +59,7 @@ export default function BadgeSection({ username }: BadgeSectionProps) {
             Commits Badge
           </h3>
           <div className="mb-2">
-            <img src={commitsBadgeUrl} alt="DevTrack Commits" />
+            <img src={commitsBadgePreviewUrl} alt="DevTrack Commits" />
           </div>
           <CopyableCodeBlock code={commitsMarkdown} />
         </div>
@@ -59,8 +70,8 @@ export default function BadgeSection({ username }: BadgeSectionProps) {
             Combined (Both Badges)
           </h3>
           <div className="mb-2 flex gap-1">
-            <img src={streakBadgeUrl} alt="DevTrack Streak" />
-            <img src={commitsBadgeUrl} alt="DevTrack Commits" />
+            <img src={streakBadgePreviewUrl} alt="DevTrack Streak" />
+            <img src={commitsBadgePreviewUrl} alt="DevTrack Commits" />
           </div>
           <CopyableCodeBlock code={combinedMarkdown} />
         </div>
