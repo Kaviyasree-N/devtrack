@@ -13,9 +13,11 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to console in all envs; swap console.error for Sentry.captureException if needed
+    // Log locally and report to Sentry in production
     console.error("[DevTrack] Application error:", error);
-    Sentry.captureException(error);
+    if (process.env.NODE_ENV === "production") {
+      Sentry.captureException(error);
+    }
   }, [error]);
 
   return (
