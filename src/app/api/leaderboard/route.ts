@@ -8,6 +8,8 @@ import {
   LEADERBOARD_BUILD_LOCK_KEY,
   type LeaderboardEntry,
   type LeaderboardPayload,
+  type LeaderboardMetric,
+  type LeaderboardEntry,
   type LeaderboardPeriod,
 } from "@/lib/leaderboard";
 import {
