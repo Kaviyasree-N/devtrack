@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockUpsert = vi.fn();
 const mockSingle = vi.fn();
 vi.mock("@/lib/supabase", () => ({
+  isSupabaseAdminAvailable: true,
   supabaseAdmin: {
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({

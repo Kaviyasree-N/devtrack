@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { resolveAppUser } from "@/lib/resolve-user";
 import { syncSponsorMetricsForUser } from "@/lib/sponsors";
 import { githubAuthErrorResponse } from "@/lib/github-fetch";
+import { isSupabaseAdminAvailable } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,11 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await resolveAppUser(githubId, githubLogin);
-  if (!user) {
+  const userId = isSupabaseAdminAvailable
+    ? (await resolveAppUser(githubId, githubLogin))?.id
+    : "mock-user-id";
+
+  if (!userId) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -31,7 +35,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const data = await syncSponsorMetricsForUser({
-      userId: user.id,
+      userId,
       token: session.accessToken,
       force,
     });

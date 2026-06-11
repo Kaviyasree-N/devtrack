@@ -1,5 +1,5 @@
 import { githubGraphQL } from "@/lib/github-fetch";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase";
 
 export interface ActiveSponsor {
   login: string;
@@ -42,6 +42,9 @@ function generateEmptySparkline() {
 export async function getCachedSponsorMetrics(
   userId: string
 ): Promise<CachedSponsorMetrics | null> {
+  if (!isSupabaseAdminAvailable) {
+    return null;
+  }
   try {
     const { data, error } = await supabaseAdmin
       .from("user_sponsor_metrics")
@@ -141,19 +144,21 @@ export async function syncSponsorMetricsForUser(options: {
     };
 
     // Cache the mock result
-    await supabaseAdmin.from("user_sponsor_metrics").upsert(
-      {
-        user_id: options.userId,
-        mrr: result.mrr,
-        active_count: result.activeCount,
-        growth_trend: result.growthTrend,
-        sparkline_data: result.sparklineData,
-        sponsors_json: result.sponsors,
-        synced_at: nowStr,
-        updated_at: nowStr,
-      },
-      { onConflict: "user_id" }
-    );
+    if (isSupabaseAdminAvailable) {
+      await supabaseAdmin.from("user_sponsor_metrics").upsert(
+        {
+          user_id: options.userId,
+          mrr: result.mrr,
+          active_count: result.activeCount,
+          growth_trend: result.growthTrend,
+          sparkline_data: result.sparklineData,
+          sponsors_json: result.sponsors,
+          synced_at: nowStr,
+          updated_at: nowStr,
+        },
+        { onConflict: "user_id" }
+      );
+    }
 
     return result;
   }
@@ -277,19 +282,21 @@ export async function syncSponsorMetricsForUser(options: {
     const nowStr = new Date().toISOString();
     
     // Upsert into Supabase
-    await supabaseAdmin.from("user_sponsor_metrics").upsert(
-      {
-        user_id: options.userId,
-        mrr,
-        active_count: activeCount,
-        growth_trend: growthTrend,
-        sparkline_data: sparklineData,
-        sponsors_json: activeSponsorsList,
-        synced_at: nowStr,
-        updated_at: nowStr,
-      },
-      { onConflict: "user_id" }
-    );
+    if (isSupabaseAdminAvailable) {
+      await supabaseAdmin.from("user_sponsor_metrics").upsert(
+        {
+          user_id: options.userId,
+          mrr,
+          active_count: activeCount,
+          growth_trend: growthTrend,
+          sparkline_data: sparklineData,
+          sponsors_json: activeSponsorsList,
+          synced_at: nowStr,
+          updated_at: nowStr,
+        },
+        { onConflict: "user_id" }
+      );
+    }
 
     return {
       mrr,
