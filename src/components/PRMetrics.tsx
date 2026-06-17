@@ -57,7 +57,6 @@ export default function PRMetrics() {
   const [prFilter, setPrFilter] = useState<"all" | "merged" | "open">("all");
   const [range, setRange] = useState<"7d" | "30d" | "90d">("30d");
   const [staleThresholdDays, setStaleThresholdDays] = useState(14);
-  const [range, setRange] = useState<7 | 30 | 90>(30);
 
   const fetchMetrics = useCallback(() => {
     setLoading(true);
@@ -185,11 +184,10 @@ export default function PRMetrics() {
               <button
                 key={option}
                 onClick={() => setRange(option)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  range === option
-                    ? "bg-[var(--accent)] text-white"
-                    : "bg-[var(--control)] text-[var(--muted-foreground)] hover:bg-[var(--card-muted)]"
-                }`}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${range === option
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-[var(--control)] text-[var(--muted-foreground)] hover:bg-[var(--card-muted)]"
+                  }`}
               >
                 {option}
               </button>
@@ -215,12 +213,12 @@ export default function PRMetrics() {
             Range
             <select
               value={range}
-              onChange={(event) => setRange(Number(event.target.value) as 7 | 30 | 90)}
+              onChange={(event) => setRange(event.target.value as "7d" | "30d" | "90d")}
               className="rounded-md border border-[var(--border)] bg-[var(--control)] px-2 py-1 text-sm text-[var(--foreground)] transition-colors"
             >
-              <option value={7}>7d</option>
-              <option value={30}>30d</option>
-              <option value={90}>90d</option>
+              <option value="7d">7d</option>
+              <option value="30d">30d</option>
+              <option value="90d">90d</option>
             </select>
           </label>
           <label className="flex items-center gap-2 text-xs font-medium text-[var(--muted-foreground)]">
@@ -248,7 +246,7 @@ export default function PRMetrics() {
           <span className="sr-only">Loading PR analytics</span>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            {[1, 2, 3, 4, 5, 6,7].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
                 aria-hidden="true"

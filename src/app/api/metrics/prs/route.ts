@@ -163,16 +163,20 @@ async function getAverageFirstReviewHours(
 
 async function fetchPRMetrics(
   token: string,
-  range: number,
   githubLogin?: string,
   orgName?: string | null,
   excludedOrgs: string[] = [],
-  range:string="30d"
+  range: string = "30d"
 ): Promise<PRMetricsBase> {
   const authorQ = githubLogin ? githubLogin : "@me";
   let q = `type:pr+author:${authorQ}`;
+  const days =
+    range === "7d" ? 7 :
+      range === "90d" ? 90 :
+        30;
+
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - range);
+  cutoff.setDate(cutoff.getDate() - days);
 
   const searchSince = cutoff.toISOString().split("T")[0];
 
@@ -211,7 +215,7 @@ async function fetchPRMetrics(
 
   // GraphQL for review cycle time
   const sinceDate = new Date();
-  sinceDate.setDate(sinceDate.getDate() - range);
+  sinceDate.setDate(sinceDate.getDate() - days);
   const since = sinceDate.toISOString().split("T")[0];
 
   const gqlAuthorQ = githubLogin ? githubLogin : "@me";
@@ -221,7 +225,7 @@ async function fetchPRMetrics(
   } else if (excludedOrgs.length > 0) {
     gqlSearchQ += excludedOrgs.map((org) => ` -org:${org}`).join("");
   }
-  gqlSearchQ += ` created:>${graphSince}`;
+  gqlSearchQ += ` created:>${since}`;
 
   const query = `
     query {
@@ -407,7 +411,6 @@ async function fetchGitLabMRMetrics(token: string): Promise<PRMetricsBase> {
 async function fetchCachedPRMetrics(
   token: string,
   cacheContext: { bypass: boolean; userId: string; staleThresholdDays?: number },
-  range: number,
   githubLogin?: string,
   orgName?: string | null,
   excludedOrgs: string[] = [],
@@ -423,7 +426,7 @@ async function fetchCachedPRMetrics(
 
   return withMetricsCache(
     { bypass: cacheContext.bypass, key, ttlSeconds: METRICS_CACHE_TTL_SECONDS.prs },
-    () => fetchPRMetrics(token, range, githubLogin, orgName, excludedOrgs)
+    () => fetchPRMetrics(token, githubLogin, orgName, excludedOrgs, range)
   );
 }
 
@@ -540,7 +543,7 @@ export async function GET(req: NextRequest) {
 
   const gitlabToken = typeof session.gitlabToken === "string" ? session.gitlabToken : undefined;
   const accountId = req.nextUrl.searchParams.get("accountId");
-  const range = Number(req.nextUrl.searchParams.get("range")) || 30;
+  const range = req.nextUrl.searchParams.get("range") || "30d";
   const bypass = isMetricsCacheBypassed(req);
 
   const gitlabCacheContext = {
@@ -588,7 +591,6 @@ export async function GET(req: NextRequest) {
           bypass,
           userId: session.githubId ?? session.githubLogin ?? "primary",
         },
-        range,
         session.githubLogin,
         orgName,
         excludedOrgs,
@@ -628,7 +630,7 @@ export async function GET(req: NextRequest) {
           ? session.accessToken
           : await getAccountToken(userRow.id, acc.githubId);
         if (!token) return null;
-        return fetchCachedPRMetrics(token, { bypass, userId: acc.githubId }, range, acc.githubLogin, orgName, excludedOrgs);
+        return fetchCachedPRMetrics(token, { bypass, userId: acc.githubId }, acc.githubLogin, orgName, excludedOrgs, range);
       });
 
       const resultsRaw = await Promise.allSettled(metricsPromises);
@@ -735,7 +737,6 @@ export async function GET(req: NextRequest) {
         bypass,
         userId: targetAccountId === session.githubId ? session.githubId : targetAccountId,
       },
-      range,
       githubLogin,
       orgName,
       excludedOrgs,
