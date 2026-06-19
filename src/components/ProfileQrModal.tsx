@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import QRCode from "react-qr-code";
+import { QRCodeCanvas } from "qrcode.react";
 
 interface ProfileQrModalProps {
   /** The full public profile URL to encode, e.g. https://devtrack-delta.vercel.app/u/johndoe */
@@ -161,7 +161,7 @@ export function ProfileQrModal({
           <QRCode
             value={profileUrl}
             size={200}
-            level="M"
+            level="H"
             bgColor="#ffffff"
             fgColor="#111827"
           />
